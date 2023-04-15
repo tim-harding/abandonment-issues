@@ -1,5 +1,6 @@
 use clap::{CommandFactory, Parser};
 use std::{
+    io::{self, Write},
     path::{Path, PathBuf},
     process::{Command, Stdio},
     time::SystemTime,
@@ -78,12 +79,13 @@ fn run(program: &str, args: &[&str], dir: &Path) {
     match child {
         Ok(mut child) => {
             print!("Cleaning {dir:?}");
+            io::stdout().flush().unwrap();
             match child.wait() {
                 Ok(status) => {
                     if status.success() {
-                        println!(" ✓")
+                        println!(" ✔️")
                     } else {
-                        eprintln!("\nExited unsuccessfully");
+                        eprintln!(" ❌");
                     }
                 }
                 Err(e) => eprintln!("\nFailed to clean {dir:?}: {e}"),
