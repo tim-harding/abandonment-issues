@@ -25,46 +25,48 @@ fn main() {
         if let Some(depth) = args.depth {
             walk_dir = walk_dir.max_depth(depth);
         }
+
         for entry in walk_dir {
-            let entry = entry.unwrap();
-            if entry.file_type().is_dir() {
-            } else {
-                let project_kind = match entry.file_name().to_str() {
-                    Some(name) => match name {
-                        "Cargo.lock" => ProjectKind::Cargo,
-                        "package-lock.json" => ProjectKind::Npm,
-                        _ => continue,
-                    },
-                    None => continue,
-                };
+            let entry = match entry {
+                Ok(entry) => entry,
+                Err(_) => continue,
+            };
 
-                let parent = match entry.path().parent() {
-                    Some(parent) => parent,
-                    None => continue,
-                };
+            let project_kind = match entry.file_name().to_str() {
+                Some(name) => match name {
+                    "Cargo.lock" => ProjectKind::Cargo,
+                    "package-lock.json" => ProjectKind::Npm,
+                    _ => continue,
+                },
+                None => continue,
+            };
 
-                if let Some(recent) = args.recent {
-                    match entry.metadata() {
-                        Ok(metadata) => match metadata.accessed() {
-                            Ok(accessed) => match now.duration_since(accessed) {
-                                Ok(duration) => {
-                                    if duration.as_secs() / SECS_PER_DAY < recent {
-                                        println!("Ignoring {parent:?}");
-                                        continue;
-                                    }
+            let parent = match entry.path().parent() {
+                Some(parent) => parent,
+                None => continue,
+            };
+
+            if let Some(recent) = args.recent {
+                match entry.metadata() {
+                    Ok(metadata) => match metadata.accessed() {
+                        Ok(accessed) => match now.duration_since(accessed) {
+                            Ok(duration) => {
+                                if duration.as_secs() / SECS_PER_DAY < recent {
+                                    println!("Ignoring {parent:?}");
+                                    continue;
                                 }
-                                Err(_) => continue,
-                            },
+                            }
                             Err(_) => continue,
                         },
                         Err(_) => continue,
-                    }
+                    },
+                    Err(_) => continue,
                 }
+            }
 
-                match project_kind {
-                    ProjectKind::Cargo => run("cargo", &["clean"], parent),
-                    ProjectKind::Npm => run("rm", &["-rf", "node_modules"], parent),
-                }
+            match project_kind {
+                ProjectKind::Cargo => run("cargo", &["clean"], parent),
+                ProjectKind::Npm => run("rm", &["-rf", "node_modules"], parent),
             }
         }
     }
