@@ -38,12 +38,18 @@ fn main() {
                     None => continue,
                 };
 
+                let parent = match entry.path().parent() {
+                    Some(parent) => parent,
+                    None => continue,
+                };
+
                 if let Some(recent) = args.recent {
                     match entry.metadata() {
                         Ok(metadata) => match metadata.accessed() {
                             Ok(accessed) => match now.duration_since(accessed) {
                                 Ok(duration) => {
                                     if duration.as_secs() / SECS_PER_DAY < recent {
+                                        println!("Ignoring {parent:?}");
                                         continue;
                                     }
                                 }
@@ -54,11 +60,6 @@ fn main() {
                         Err(_) => continue,
                     }
                 }
-
-                let parent = match entry.path().parent() {
-                    Some(parent) => parent,
-                    None => continue,
-                };
 
                 match project_kind {
                     ProjectKind::Cargo => run("cargo", &["clean"], parent),
