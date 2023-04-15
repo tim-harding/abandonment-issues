@@ -1,6 +1,10 @@
 [package]
 name = "abandonment-issues"
+description = "Clean up build and package files from old projects"
 version = "0.1.0"
+authors = ["Tim Harding"]
+repository = "https://github.com/tim-harding/abandonment-issues"
+license = "MIT"
 edition = "2021"
 
 [dependencies]
