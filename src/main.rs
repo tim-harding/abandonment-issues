@@ -21,7 +21,6 @@ fn main() {
 
     let now = SystemTime::now();
     for directory in args.directory {
-        let mut project_kind = ProjectKind::None;
         let mut walk_dir = WalkDir::new(directory).contents_first(true);
         if let Some(depth) = args.depth {
             walk_dir = walk_dir.max_depth(depth);
@@ -29,14 +28,8 @@ fn main() {
         for entry in walk_dir {
             let entry = entry.unwrap();
             if entry.file_type().is_dir() {
-                match project_kind {
-                    ProjectKind::None => {}
-                    ProjectKind::Cargo => run("cargo", &["clean"], entry.path()),
-                    ProjectKind::Npm => run("rm", &["-r", "node_modules"], entry.path()),
-                }
-                project_kind = ProjectKind::None;
             } else {
-                let tentative_project_kind = match entry.file_name().to_str() {
+                let project_kind = match entry.file_name().to_str() {
                     Some(name) => match name {
                         "Cargo.lock" => ProjectKind::Cargo,
                         "package-lock.json" => ProjectKind::Npm,
@@ -62,7 +55,15 @@ fn main() {
                     }
                 }
 
-                project_kind = tentative_project_kind;
+                let parent = match entry.path().parent() {
+                    Some(parent) => parent,
+                    None => continue,
+                };
+
+                match project_kind {
+                    ProjectKind::Cargo => run("cargo", &["clean"], parent),
+                    ProjectKind::Npm => run("rm", &["-rf", "node_modules"], parent),
+                }
             }
         }
     }
@@ -115,7 +116,6 @@ struct Args {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum ProjectKind {
-    None,
     Cargo,
     Npm,
 }
