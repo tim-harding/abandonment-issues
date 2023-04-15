@@ -52,7 +52,8 @@ fn main() {
                         Ok(accessed) => match now.duration_since(accessed) {
                             Ok(duration) => {
                                 if duration.as_secs() / SECS_PER_DAY < recent {
-                                    println!("Ignoring {parent:?}");
+                                    let parent = parent.display();
+                                    println!("Ignoring {parent}");
                                     continue;
                                 }
                             }
@@ -82,7 +83,8 @@ fn run(program: &str, args: &[&str], dir: &Path) {
         .spawn();
     match child {
         Ok(mut child) => {
-            print!("Cleaning {dir:?}");
+            let dir = dir.display();
+            print!("Cleaning {dir}");
             io::stdout().flush().unwrap();
             match child.wait() {
                 Ok(status) => {
@@ -92,7 +94,7 @@ fn run(program: &str, args: &[&str], dir: &Path) {
                         eprintln!(" ❌");
                     }
                 }
-                Err(e) => eprintln!("\nFailed to clean {dir:?}: {e}"),
+                Err(e) => eprintln!("\nFailed to clean {dir}: {e}"),
             }
         }
         Err(e) => eprintln!("Failed to run {program}: {e}"),
